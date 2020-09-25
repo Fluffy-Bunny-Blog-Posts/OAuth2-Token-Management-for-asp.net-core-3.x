@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace Microsoft.AspNetCore.Mvc
 {
-    public static class SessionExtensions
+    internal static class SessionExtensions
     {
         public static void Set<T>(this ISession session, string key, T value)
         {

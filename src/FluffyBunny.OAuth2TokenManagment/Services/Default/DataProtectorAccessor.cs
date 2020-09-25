@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.DataProtection;
 
 namespace FluffyBunny.OAuth2TokenManagment.Services.Default
 {
-    public class DataProtectorAccessor : IDataProtectorAccessor
+    internal class DataProtectorAccessor : IDataProtectorAccessor
     {
         private IDataProtectionProvider _provider;
 

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace FluffyBunny.OAuth2TokenManagment.Services.Default
 {
-    public class Serializer : ISerializer
+    internal class Serializer : ISerializer
     {
         public T Deserialize<T>(string text) where T : class
         {
