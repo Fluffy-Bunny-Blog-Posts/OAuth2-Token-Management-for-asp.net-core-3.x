@@ -14,13 +14,16 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
     {
         static TimedLock _lock = new TimedLock();
         const string PreKeyName = "753fe8f1-df85-4560-ab74-85c4151b5df0";
+        private IHttpClientFactory _clientFactory;
         private IMemoryCache _memoryCache;
         private ILogger<OAuth2CredentialManager> _logger;
 
         public OAuth2CredentialManager(
+               IHttpClientFactory clientFactory,
                IMemoryCache memoryCache,
                ILogger<OAuth2CredentialManager> logger)
         {
+            _clientFactory = clientFactory;
             _memoryCache = memoryCache;
             _logger = logger;
         }
@@ -48,10 +51,19 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
                 OAuth2Credentials creds;
                 if (_memoryCache.TryGetValue(memKey, out creds))
                 {
+                   
                     if (creds.DiscoveryDocumentResponse == null)
                     {
                         // pull it.  
-                        var client = new HttpClient();
+                        HttpClient client = null;
+                        if (string.IsNullOrEmpty(creds.HttpClientName))
+                        {
+                            client = new HttpClient();
+                        }
+                        else
+                        {
+                            client = _clientFactory.CreateClient(creds.HttpClientName);
+                        }
                         var disco = await client.GetDiscoveryDocumentAsync(creds.Authority);
                         if (disco.IsError)
                             throw new Exception(disco.Error);

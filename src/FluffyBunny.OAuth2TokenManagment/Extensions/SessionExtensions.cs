@@ -32,6 +32,7 @@ namespace Microsoft.AspNetCore.Mvc
             return value == null ? default :
                 JsonSerializer.Deserialize<T>(value, options);
         }
+       
         public static string GetSessionId(this ISession session)
         {
             if (!session.IsAvailable)

@@ -1,0 +1,61 @@
+﻿@page
+@model WebApp.Pages.SessionTokenModel
+@{
+    ViewData["Title"] = "Session Token";
+}
+<h1>@ViewData["Title"]</h1>
+
+<div class="row">
+    <div class="col-md-4">
+        <section>
+            <form id="account" method="post">
+                <h4>Test the session Token Manager.</h4>
+                <hr />
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Fetch New Token</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+</div>
+
+@if (Model.ManagedToken != null)
+{
+    <h1 class="display-4">Managed Token</h1>
+    <table class="table">
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+        @foreach (var item in Model.ManagedToken)
+        {
+            <tr>
+                <td>@item.Key</td>
+                <td>@item.Value</td>
+            </tr>
+
+        }
+    </table>
+
+}
+
+@if (Model.TokenReponse != null)
+{
+
+    <h1 class="display-4">Token Response</h1>
+    <table class="table">
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+        @foreach (var item in Model.TokenReponse)
+        {
+            <tr>
+                <td>@item.Key</td>
+                <td>@item.Value</td>
+            </tr>
+
+        }
+    </table>
+}

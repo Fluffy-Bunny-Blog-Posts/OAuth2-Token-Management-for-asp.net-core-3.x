@@ -8,6 +8,6 @@ namespace FluffyBunny.OAuth2TokenManagment.Models
         public DiscoveryDocumentResponse DiscoveryDocumentResponse { get; set; }
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
-
+        public string HttpClientName { get; set; }
     }
 }

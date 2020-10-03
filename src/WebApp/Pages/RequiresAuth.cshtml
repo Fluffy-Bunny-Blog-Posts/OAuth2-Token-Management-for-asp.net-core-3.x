@@ -1,0 +1,33 @@
+﻿@page
+@model WebApp.Pages.RequiresAuthModel
+
+@{
+    ViewData["Title"] = "Requires Auth";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>This is a protected area.</p>
+
+ 
+
+@if (Model.ManagedToken != null)
+{
+    <h1 class="display-4">Managed Token</h1>
+    <table class="table">
+        <tr>
+            <th>Key</th>
+            <th>Value</th>
+        </tr>
+        @foreach (var item in Model.ManagedToken)
+        {
+            <tr>
+                <td>@item.Key</td>
+                <td>@item.Value</td>
+            </tr>
+
+        }
+    </table>
+
+}
+
+ 

@@ -17,10 +17,10 @@ namespace FluffyBunny.OAuth2TokenManagment.Extensions
             services.AddSingleton<IDataProtectorAccessor, DataProtectorAccessor>();
             services.AddSingleton<IOpenIdConnectConfigurationAccessor, OpenIdConnectConfigurationAccessor>();
             services.AddSingleton<ICustomTokenRequestManager, CustomTokenRequestManager>();
-            services.AddTransient<GlobalDistributedCacheTokenStorage>();
-            services.AddTransient<SessionDistributedCacheTokenStorage>();
-            services.AddTransient(typeof(ITokenManager<>), typeof(TokenManager<>));
-            services.AddTransient<IOAuth2CredentialManager, OAuth2CredentialManager>();
+            services.AddScoped<GlobalDistributedCacheTokenStorage>();
+            services.AddScoped<SessionTokenStorage>();
+            services.AddScoped(typeof(ITokenManager<>), typeof(TokenManager<>));
+            services.AddScoped<IOAuth2CredentialManager, OAuth2CredentialManager>();
             return services;
         }
     }

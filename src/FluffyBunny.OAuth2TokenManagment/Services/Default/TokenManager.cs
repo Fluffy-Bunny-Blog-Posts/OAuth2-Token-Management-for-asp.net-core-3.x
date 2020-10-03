@@ -20,6 +20,7 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
     public class TokenManager<T> : ITokenManager<T> where T : TokenStorage
     {
         static TimedLock _lock = new TimedLock();
+        private IHttpClientFactory _clientFactory;
         private IServiceProvider _serviceProvider;
         private IMemoryCache _memoryCache;
         private IOAuth2CredentialManager _oAuth2CredentialManager;
@@ -29,6 +30,7 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
 
 
         public TokenManager(
+            IHttpClientFactory clientFactory,
             IServiceProvider serviceProvider,
             IMemoryCache memoryCache,
             IOAuth2CredentialManager oAuth2CredentialManager,
@@ -36,6 +38,7 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
             ICustomTokenRequestManager customTokenRequest,
             ILogger<TokenManager<T>> logger)
         {
+            _clientFactory = clientFactory;
             _serviceProvider = serviceProvider;
             _memoryCache = memoryCache;
             _oAuth2CredentialManager = oAuth2CredentialManager;
@@ -125,7 +128,17 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
                 {
                     throw new Exception($"GetOAuth2CredentialsAsync failed: key={managedToken.CredentialsKey}");
                 }
-                var client = new HttpClient();
+                HttpClient client = null;
+                if (string.IsNullOrEmpty(creds.HttpClientName))
+                {
+                    client = new HttpClient();
+                }
+                else
+                {
+                    client = _clientFactory.CreateClient(creds.HttpClientName);
+                }
+
+               
                 var response = await client.RequestRefreshTokenAsync(new RefreshTokenRequest
                 {
                     Address = creds.DiscoveryDocumentResponse.TokenEndpoint,
