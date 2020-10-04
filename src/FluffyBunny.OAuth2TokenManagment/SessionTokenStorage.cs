@@ -41,19 +41,23 @@ namespace FluffyBunny.OAuth2TokenManagment
         }
         ISession Session => _httpContextAccessor.HttpContext.Session;
         Dictionary<string, ManagedToken> ManagedTokens { get; set; }
-        public string GetCacheKey()
+        public string CacheKey
         {
-            var sessionKey = Session.Get<SessionKey>(_sessionKey);
-            if (sessionKey == null)
+            get
             {
-                sessionKey = new SessionKey
+                var sessionKey = Session.Get<SessionKey>(_sessionKey);
+                if (sessionKey == null)
                 {
-                    Key = GuidS
-                };
-                Session.Set(_sessionKey, sessionKey);
+                    sessionKey = new SessionKey
+                    {
+                        Key = GuidS
+                    };
+                    Session.Set(_sessionKey, sessionKey);
+                }
+                return sessionKey.Key;
             }
-            return sessionKey.Key;
         }
+         
 
         protected Dictionary<string, ManagedToken> GetManagedTokens()
         {
@@ -61,7 +65,7 @@ namespace FluffyBunny.OAuth2TokenManagment
             {
                 return ManagedTokens;
             }
-            var cacheKey = GetCacheKey();
+            var cacheKey = CacheKey;
             var protector = _dataProtectorAccessor.GetProtector(cacheKey);
 
             var json = Session.Get<string>(cacheKey);
@@ -80,7 +84,7 @@ namespace FluffyBunny.OAuth2TokenManagment
         }
         protected void UpsertManagedTokens(Dictionary<string, ManagedToken> managedTokens)
         {
-            var cacheKey = GetCacheKey();
+            var cacheKey = CacheKey;
             var protector = _dataProtectorAccessor.GetProtector(cacheKey);
 
             var json = _serializer.Serialize(managedTokens);
@@ -131,7 +135,7 @@ namespace FluffyBunny.OAuth2TokenManagment
 
         public async override Task RemoveManagedTokensAsync()
         {
-            var cacheKey = GetCacheKey();
+            var cacheKey = CacheKey;
             Session.Remove(cacheKey);
             ManagedTokens = null;
         }
