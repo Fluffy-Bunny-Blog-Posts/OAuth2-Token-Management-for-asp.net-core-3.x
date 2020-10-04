@@ -1,5 +1,4 @@
 ﻿using IdentityModel.Client;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using FluffyBunny.OAuth2TokenManagment.Models;
 using System;
@@ -7,22 +6,14 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static FluffyBunny.OAuth2TokenManagment.TimedLock;
-using FluffyBunny.OAuth2TokenManagment.Services;
 
 namespace FluffyBunny.OAuth2TokenManagment.Services.Default
 {
-    /*
-     We don't persist credentials to anywhere, we will keep our OAuth2 credentials in IMemoryCache and our 
-    "so-called" client_id/client_secrets will be references to the actual credentials.
-
-    each service will have their own in-memory copy
-     */
     public class TokenManager<T> : ITokenManager<T> where T : TokenStorage
     {
         static TimedLock _lock = new TimedLock();
         private IHttpClientFactory _clientFactory;
         private IServiceProvider _serviceProvider;
-        private IMemoryCache _memoryCache;
         private IOAuth2CredentialManager _oAuth2CredentialManager;
         private T _tokenStorage;
         private ICustomTokenRequestManager _customTokenRequest;
@@ -32,7 +23,6 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
         public TokenManager(
             IHttpClientFactory clientFactory,
             IServiceProvider serviceProvider,
-            IMemoryCache memoryCache,
             IOAuth2CredentialManager oAuth2CredentialManager,
             T tokenStorage,
             ICustomTokenRequestManager customTokenRequest,
@@ -40,7 +30,6 @@ namespace FluffyBunny.OAuth2TokenManagment.Services.Default
         {
             _clientFactory = clientFactory;
             _serviceProvider = serviceProvider;
-            _memoryCache = memoryCache;
             _oAuth2CredentialManager = oAuth2CredentialManager;
             _tokenStorage = tokenStorage;
             _customTokenRequest = customTokenRequest;
