@@ -30,73 +30,86 @@ namespace WebApp
     {
         public IConfiguration Configuration { get; }
         public IHostEnvironment HostingEnvironment { get; }
-
+        private ILogger _logger;
+        private Exception _deferedException;
         public Startup(
             IConfiguration configuration,
             IHostEnvironment hostingEnvironment)
         {
             Configuration = configuration;
             HostingEnvironment = hostingEnvironment;
+            _logger = new LoggerBuffered(LogLevel.Debug);
+            _logger.LogInformation($"Create Startup {hostingEnvironment.ApplicationName} - {hostingEnvironment.EnvironmentName}");
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            //Accept all server certificate
-            ServicePointManager.ServerCertificateValidationCallback =
+            try
+            {
+                //Accept all server certificate
+                ServicePointManager.ServerCertificateValidationCallback =
                 delegate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
                 {
                     return true;
                 };
 
-            services.AddManagedTokenServices();
+                services.AddManagedTokenServices();
 
-            services.AddDbContext<ApplicationDbContext>(config =>
-            {
+                services.AddDbContext<ApplicationDbContext>(config =>
+                {
                 // for in memory database  
                 config.UseInMemoryDatabase("InMemoryDataBase");
-            });
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
-
-            services.AddControllers();
-            IMvcBuilder builder = services.AddRazorPages();
-            if (HostingEnvironment.IsDevelopment())
-            {
-                builder.AddRazorRuntimeCompilation();
-            }
-            var httpClientHandler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback =
-                   (message, certificate, chain, sslPolicyErrors) => true
-            };
-
-            // used by FakeTokenFetchService
-            services.AddHttpClient("external", client => {
-                client.BaseAddress = new Uri("https://127.0.0.1.xip.io:5001");
-            })
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-                {
-                    ClientCertificateOptions = ClientCertificateOption.Manual,
-                    ServerCertificateCustomValidationCallback =
-                       (httpRequestMessage, cert, cetChain, policyErrors) =>
-                       {
-                           return true;
-                       }
                 });
+                services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                    .AddEntityFrameworkStores<ApplicationDbContext>()
+                    .AddDefaultTokenProviders();
 
-           
-            services.AddSingleton<IFakeTokenFetchService, FakeTokenFetchService>();
+                services.AddControllers();
+                IMvcBuilder builder = services.AddRazorPages();
+                if (HostingEnvironment.IsDevelopment())
+                {
+                    builder.AddRazorRuntimeCompilation();
+                }
+                var httpClientHandler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback =
+                       (message, certificate, chain, sslPolicyErrors) => true
+                };
 
-            services.AddSession(options =>
-            {
-                options.Cookie.IsEssential = true;
-                options.Cookie.Name = $".session.{Configuration["applicationName"]}";
+                var externalHttpEndpoint = Configuration["ExternalHttpEndpoint"];
+                _logger.LogInformation($"ExternalHttpEndpoint:{externalHttpEndpoint}");
+                // used by FakeTokenFetchService
+                services.AddHttpClient("external", client =>
+                {
+                    client.BaseAddress = new Uri(externalHttpEndpoint);
+                })
+                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                    {
+                        ClientCertificateOptions = ClientCertificateOption.Manual,
+                        ServerCertificateCustomValidationCallback =
+                           (httpRequestMessage, cert, cetChain, policyErrors) =>
+                           {
+                               return true;
+                           }
+                    });
+
+
+                services.AddSingleton<IFakeTokenFetchService, FakeTokenFetchService>();
+
+                services.AddSession(options =>
+                {
+                    options.Cookie.IsEssential = true;
+                    options.Cookie.Name = $".session.{Configuration["applicationName"]}";
                 // Set a short timeout for easy testing.
                 options.IdleTimeout = TimeSpan.FromSeconds(3600);
-                options.Cookie.HttpOnly = true;
-            });
+                    options.Cookie.HttpOnly = true;
+                });
+            }
+            catch (Exception ex)
+            {
+                _deferedException = ex;
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -106,6 +119,17 @@ namespace WebApp
            IServiceProvider serviceProvider,
            ILogger<Startup> logger)
         {
+            if (_logger is LoggerBuffered)
+            {
+                (_logger as LoggerBuffered).CopyToLogger(logger);
+            }
+            _logger = logger;
+            _logger.LogInformation("Configure");
+            if (_deferedException != null)
+            {
+                _logger.LogError(_deferedException.Message);
+                throw _deferedException;
+            }
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -113,6 +137,11 @@ namespace WebApp
             }
             else
             {
+                // START: DO NOT PUT THIS IN REAL PRODUCTION
+                app.UseDeveloperExceptionPage();
+                app.UseDatabaseErrorPage();
+                // END: DO NOT PUT THIS IN REAL PRODUCTION
+
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
@@ -127,9 +156,12 @@ namespace WebApp
                 ClientSecret = "secret"
             }).GetAwaiter().GetResult();
 
+            //  "https://127.0.0.1.xip.io:5001/api/FakeOAuth2"
+            var fakeOAuth2Endpoint = Configuration["FakeOAuth2Endpoint"];
+            _logger.LogInformation($"FakeOAuth2Endpoint:{fakeOAuth2Endpoint}");
             oAuth2CredentialManager.AddCredentialsAsync("fake", new OAuth2Credentials
             {
-                Authority = "https://127.0.0.1.xip.io:5001/api/FakeOAuth2",
+                Authority = fakeOAuth2Endpoint,
                 ClientId = "fake_id",
                 ClientSecret = "fake_secret",
                 HttpClientName = "external"

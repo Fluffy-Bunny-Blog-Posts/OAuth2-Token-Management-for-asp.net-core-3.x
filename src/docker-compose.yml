@@ -1,0 +1,44 @@
+  
+version: '3.4'
+
+services:
+  FluffyBunny.OAuth2TokenManagment.App:
+    image: fluffybunny/oauth2tokenmanagementapp:latest
+    container_name: WebApp
+    volumes:
+      - ${CERTIFICATE_PATH}:/root/.dotnet/https
+    ports:
+      - 5000:80
+      - 5001:443
+    networks:
+      - oauth2-tokenmanagment-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS}
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_KESTREL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=${ASPNETCORE_KESTREL_CERTIFICATE_PATH}
+      - ASPNETCORE_HTTPS_PORT=5001
+      - FakeOAuth2Endpoint=https://fake.external.com:443/api/FakeOAuth2
+      - ExternalHttpEndpoint=https://fake.external.com:443
+
+  FluffyBunny.OAuth2TokenManagment2.App:
+    image: fluffybunny/oauth2tokenmanagementapp:latest
+    container_name: fake.external.com
+    volumes:
+      - ${CERTIFICATE_PATH}:/root/.dotnet/https
+    ports:
+      - 5010:80
+      - 5011:443
+    networks:
+      - oauth2-tokenmanagment-network
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=${ASPNETCORE_URLS}
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=${ASPNETCORE_KESTREL_CERTIFICATE_PASSWORD}
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=${ASPNETCORE_KESTREL_CERTIFICATE_PATH}
+      - ASPNETCORE_HTTPS_PORT=5011
+
+
+networks:
+  oauth2-tokenmanagment-network:
+    external: true
