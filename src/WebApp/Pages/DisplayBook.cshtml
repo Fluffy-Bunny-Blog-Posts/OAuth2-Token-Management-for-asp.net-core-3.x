@@ -1,0 +1,38 @@
+﻿@page "{id}"
+@model WebApp.Pages.DisplayBookModel
+@{
+}
+@if (Model.Book != null)
+{
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayName("ISBN")
+                </th>
+                <th>
+                    @Html.DisplayName("Author")
+                </th>
+                <th>
+                    @Html.DisplayName("Title")
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td>
+                    @Model.Book.ISBN
+                </td>
+                <td>
+                    @Model.Book.Author
+                </td>
+                <td>
+                    @Model.Book.Title
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+}

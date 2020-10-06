@@ -1,0 +1,61 @@
+﻿@page
+@model WebApp.Pages.BooksModel
+@{
+}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+
+
+    <div class="" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+
+            <li class="nav-item">
+                <a asp-page="./NewBook" class="nav-link">Add Book</a>
+            </li>
+        </ul>
+         
+    </div>
+</nav>
+ 
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayName("ISBN")
+            </th>
+            <th>
+                @Html.DisplayName("Author")
+            </th>
+            <th>
+                @Html.DisplayName("Title")
+            </th>
+            <th>CRUD</th>
+        </tr>
+    </thead>
+    @if (Model.Books != null)
+    {
+        <tbody>
+            @foreach (var item in Model.Books)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ISBN)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Author)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Title)
+                    </td>
+                    <td>
+                        <a asp-page="./DisplayBook" asp-route-id="@item.ISBN">Look</a>|
+                        <a asp-page="./EditBook" asp-route-id="@item.ISBN">Change</a>|
+                        <a asp-page="./Books"
+                           onclick="return confirm('Are you sure you want to delete this item?');"
+                           asp-page-handler="Delete" asp-route-id="@item.ISBN">Delete</a>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+        }
+    </table>

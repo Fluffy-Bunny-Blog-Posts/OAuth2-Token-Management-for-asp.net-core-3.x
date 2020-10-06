@@ -22,6 +22,7 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Net.Http;
+using PublicLibraryServices.Extensions;
 
 namespace WebApp
 {
@@ -47,6 +48,7 @@ namespace WebApp
         {
             try
             {
+                services.AddBookService();
                 //Accept all server certificate
                 ServicePointManager.ServerCertificateValidationCallback =
                 delegate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
