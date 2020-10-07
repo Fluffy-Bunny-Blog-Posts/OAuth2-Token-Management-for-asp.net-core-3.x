@@ -20,14 +20,17 @@ namespace WebApp.Pages
         public Dictionary<string, string> TokenReponse { get; private set; }
         public Dictionary<string, string> ManagedToken { get; private set; }
 
+        private ISessionOAuth2Introspection _sessionOAuth2Introspection;
         private ITokenManager<SessionTokenStorage> _sessionTokenManager;
         private IFakeTokenFetchService _fakeTokenFetchService;
         private ILogger<SessionTokenModel> _logger;
         public SessionTokenModel(
             ITokenManager<SessionTokenStorage> sessionTokenManager,
             IFakeTokenFetchService fakeTokenFetchService,
+            ISessionOAuth2Introspection sessionOAuth2Introspection,
             ILogger<SessionTokenModel> logger)
         {
+            _sessionOAuth2Introspection = sessionOAuth2Introspection;
             _sessionTokenManager = sessionTokenManager;
             _fakeTokenFetchService = fakeTokenFetchService;
             _logger = logger;
@@ -40,6 +43,15 @@ namespace WebApp.Pages
             .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .ToDictionary(prop => prop.Name, prop => prop.GetValue(tokenResponse, null).ToString());
             await _sessionTokenManager.AddManagedTokenAsync("fake", new ManagedToken
+            {
+                AccessToken = tokenResponse.AccessToken,
+                RefreshToken = tokenResponse.RefreshToken,
+                ExpiresIn = tokenResponse.ExpiresIn,
+                CredentialsKey = "fake"
+            });
+
+            // This only gets put in so it can be checked for revocation in a middleware.
+            await _sessionOAuth2Introspection.AddManagedTokenAsync(new ManagedToken
             {
                 AccessToken = tokenResponse.AccessToken,
                 RefreshToken = tokenResponse.RefreshToken,

@@ -1,5 +1,6 @@
 ﻿using FluffyBunny.OAuth2TokenManagment.Services;
 using FluffyBunny.OAuth2TokenManagment.Services.Default;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -21,6 +22,14 @@ namespace FluffyBunny.OAuth2TokenManagment.Extensions
             services.AddScoped<SessionTokenStorage>();
             services.AddScoped(typeof(ITokenManager<>), typeof(TokenManager<>));
             services.AddScoped<IOAuth2CredentialManager, OAuth2CredentialManager>();
+            services.AddScoped<ISessionOAuth2Introspection, SessionOAuth2Introspection>();
+            services.AddScoped<ISigninManager, DefaultSigninManager>();
+            return services;
+        }
+        public static IServiceCollection AddSessionOAuth2IntroSpection(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<SessionOAuth2IntrospectionOptions>(configuration.GetSection("SessionOAuth2Introspection"));
+
             return services;
         }
     }

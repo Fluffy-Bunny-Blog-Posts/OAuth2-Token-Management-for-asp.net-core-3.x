@@ -107,6 +107,7 @@ namespace WebApp
                 options.IdleTimeout = TimeSpan.FromSeconds(3600);
                     options.Cookie.HttpOnly = true;
                 });
+                services.AddSessionOAuth2IntroSpection(Configuration);
             }
             catch (Exception ex)
             {
@@ -185,6 +186,7 @@ namespace WebApp
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseSession();
+            app.UseSessionOAuth2Introspection();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
