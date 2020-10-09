@@ -23,6 +23,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Net.Http;
 using PublicLibraryServices.Extensions;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace WebApp
 {
@@ -55,17 +58,98 @@ namespace WebApp
                 {
                     return true;
                 };
+                services.AddCors(options => options.AddPolicy("CorsPolicy",
+                       builder =>
+                       {
+
+                           builder.AllowAnyMethod()
+                                 .AllowAnyHeader()
+                                 .AllowAnyOrigin();
+                       }));
+                // set forward header keys to be the same value as request's header keys
+                // so that redirect URIs and other security policies work correctly.
+                var aspNETCORE_FORWARDEDHEADERS_ENABLED = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase);
+                if (aspNETCORE_FORWARDEDHEADERS_ENABLED)
+                {
+                    //To forward the scheme from the proxy in non-IIS scenarios
+                    services.Configure<ForwardedHeadersOptions>(options =>
+                    {
+                        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                        // Only loopback proxies are allowed by default.
+                        // Clear that restriction because forwarders are enabled by explicit 
+                        // configuration.
+                        options.KnownNetworks.Clear();
+                        options.KnownProxies.Clear();
+                    });
+                }
 
                 services.AddManagedTokenServices();
 
                 services.AddDbContext<ApplicationDbContext>(config =>
                 {
-                // for in memory database  
-                config.UseInMemoryDatabase("InMemoryDataBase");
+                    // for in memory database  
+                    config.UseInMemoryDatabase("InMemoryDataBase");
                 });
                 services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                     .AddEntityFrameworkStores<ApplicationDbContext>()
                     .AddDefaultTokenProviders();
+
+                //*************************************************
+                //*********** COOKIE Start ************************
+                //*************************************************
+
+                var cookieTTL = Convert.ToInt32(Configuration["authAndSessionCookies:ttl"]);
+                services.Configure<CookiePolicyOptions>(options =>
+                {
+                    // This lambda determines whether user consent for non-essential cookies is needed for a given request.
+                    options.CheckConsentNeeded = context => true;
+                    options.MinimumSameSitePolicy = SameSiteMode.None;
+                });
+                services.ConfigureExternalCookie(config =>
+                {
+                    config.Cookie.SameSite = SameSiteMode.None;
+                });
+                services.ConfigureApplicationCookie(options =>
+                {
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+                    options.ExpireTimeSpan = TimeSpan.FromSeconds(cookieTTL);
+                    options.SlidingExpiration = true;
+                    options.Cookie.Name = $"{Configuration["applicationName"]}.AspNetCore.Identity.Application";
+                    options.LoginPath = $"/Identity/Account/Login";
+                    options.LogoutPath = $"/Identity/Account/Logout";
+                    options.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+                    options.Events = new CookieAuthenticationEvents()
+                    {
+
+                        OnRedirectToLogin = (ctx) =>
+                        {
+                            if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == StatusCodes.Status200OK)
+                            {
+                                ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                return Task.CompletedTask;
+                            }
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                            return Task.CompletedTask;
+                        },
+                        OnRedirectToAccessDenied = (ctx) =>
+                        {
+                            if (ctx.Request.Path.StartsWithSegments("/api") && ctx.Response.StatusCode == StatusCodes.Status200OK)
+                            {
+                                ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                                return Task.CompletedTask;
+                            }
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+
+                //*************************************************
+                //*********** COOKIE END **************************
+                //*************************************************
 
                 services.AddControllers();
                 IMvcBuilder builder = services.AddRazorPages();
@@ -85,16 +169,15 @@ namespace WebApp
                 services.AddHttpClient("external", client =>
                 {
                     client.BaseAddress = new Uri(externalHttpEndpoint);
-                })
-                    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-                    {
-                        ClientCertificateOptions = ClientCertificateOption.Manual,
-                        ServerCertificateCustomValidationCallback =
+                }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+                {
+                    ClientCertificateOptions = ClientCertificateOption.Manual,
+                    ServerCertificateCustomValidationCallback =
                            (httpRequestMessage, cert, cetChain, policyErrors) =>
                            {
                                return true;
                            }
-                    });
+                });
 
 
                 services.AddSingleton<IFakeTokenFetchService, FakeTokenFetchService>();
@@ -102,10 +185,12 @@ namespace WebApp
                 services.AddSession(options =>
                 {
                     options.Cookie.IsEssential = true;
-                    options.Cookie.Name = $".session.{Configuration["applicationName"]}";
-                // Set a short timeout for easy testing.
-                options.IdleTimeout = TimeSpan.FromSeconds(3600);
+                    options.Cookie.Name = $"{Configuration["applicationName"]}.Session";
+                    // Set a short timeout for easy testing.
+                    options.IdleTimeout = TimeSpan.FromSeconds(cookieTTL);
                     options.Cookie.HttpOnly = true;
+                    options.Cookie.SameSite = SameSiteMode.None;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 });
                 services.AddSessionOAuth2IntroSpection(Configuration);
             }

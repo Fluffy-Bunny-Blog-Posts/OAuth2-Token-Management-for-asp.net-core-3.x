@@ -20,15 +20,6 @@ namespace WebApp.Pages
 
         public void OnGet()
         {
-            var value = TempData["ttt"];
-
-            if(value == null)
-            {
-                value = Guid.NewGuid().ToString();
-            }
-            value += Guid.NewGuid().ToString();
-            TempData["ttt"]= value;
-
         }
     }
 }
