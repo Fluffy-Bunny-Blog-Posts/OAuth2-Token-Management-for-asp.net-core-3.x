@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,14 @@ namespace WebApp.Pages
 
         public void OnGet()
         {
+            var value = TempData["ttt"];
+
+            if(value == null)
+            {
+                value = Guid.NewGuid().ToString();
+            }
+            value += Guid.NewGuid().ToString();
+            TempData["ttt"]= value;
 
         }
     }

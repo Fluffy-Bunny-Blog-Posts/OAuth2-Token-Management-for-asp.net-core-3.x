@@ -183,10 +183,12 @@ namespace WebApp
 
             app.UseRouting();
 
+            app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseSession();
             app.UseSessionOAuth2Introspection();
+            app.UseMiddleware<AuthSessionValidationMiddleware>();
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
