@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace WebApp
 {
@@ -33,8 +34,20 @@ namespace WebApp
             }
             if (context.User.Identity.IsAuthenticated)
             {
-                var ttt = context.Session.GetString("ttt");
-                if (ttt == null)
+                var query = from item in context.User.Claims
+                            where item.Type == ".sessionKey"
+                            select item;
+                bool forceSignout = true;
+                if (query.Any())
+                {
+                    var claim = query.FirstOrDefault();
+                    var sessionKey = context.Session.GetString(claim.Value);
+                    if(sessionKey != null)
+                    {
+                        forceSignout = false;
+                    }
+                }
+                if (forceSignout)
                 {
                     var signinManager = serviceProvider.GetRequiredService<ISigninManager>();
                     await signinManager.SignOutAsync();

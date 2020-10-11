@@ -26,6 +26,7 @@ using PublicLibraryServices.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace WebApp
 {
@@ -90,9 +91,14 @@ namespace WebApp
                     // for in memory database  
                     config.UseInMemoryDatabase("InMemoryDataBase");
                 });
-                services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                services.AddIdentity<IdentityUser,IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
                     .AddEntityFrameworkStores<ApplicationDbContext>()
                     .AddDefaultTokenProviders();
+                // services.AddDefaultIdentity must be adding its own fake
+                // Switched to services.AddIdentity<IdentityUser,IdentityRole>, and now I have to add it.
+                services.AddScoped<IEmailSender, FakeEmailSender>(); 
+                                                                                    
+                services.AddScoped<IUserClaimsPrincipalFactory<IdentityUser>, SeedSessionClaimsPrincipalFactory>();
 
                 //*************************************************
                 //*********** COOKIE Start ************************
