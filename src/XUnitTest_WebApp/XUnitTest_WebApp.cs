@@ -14,7 +14,6 @@ using Xunit;
 
 namespace XUnitTest_WebApp
 {
-    // https://itbackyard.com/how-to-mock-authorize-attribute-for-testing-in-asp-net-core-3-1/
     // https://docs.microsoft.com/en-us/aspnet/core/test/integration-tests?view=aspnetcore-3.1
     // https://wellsb.com/csharp/aspnet/xunit-unit-test-razor-pages/
 
