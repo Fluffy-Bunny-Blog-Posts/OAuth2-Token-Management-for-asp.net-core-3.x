@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FluffyBunny.OAuth2TokenManagment\FluffyBunny.OAuth2TokenManagment.csproj" />
     <ProjectReference Include="..\PublicLibraryServices\PublicLibraryServices.csproj" />
+    <ProjectReference Include="..\TestServices\TestServices.csproj" />
   </ItemGroup>
 
 </Project>

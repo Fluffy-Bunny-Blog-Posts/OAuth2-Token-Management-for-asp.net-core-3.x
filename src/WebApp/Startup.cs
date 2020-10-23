@@ -22,7 +22,6 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.Net.Http;
-using PublicLibraryServices.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -52,6 +51,7 @@ namespace WebApp
         {
             try
             {
+                services.AddTestServices();
                 services.AddBookService();
                 //Accept all server certificate
                 ServicePointManager.ServerCertificateValidationCallback =

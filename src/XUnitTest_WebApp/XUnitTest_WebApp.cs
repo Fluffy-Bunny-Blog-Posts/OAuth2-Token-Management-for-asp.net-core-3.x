@@ -9,6 +9,7 @@ using System;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using TestServices;
 using WebApp.Pages;
 using Xunit;
 
@@ -81,24 +82,22 @@ namespace XUnitTest_WebApp
               .Should().Be(HttpStatusCode.OK);
         }
         [Fact]
-        public async Task Get_BooksAsync()
+        public async Task Get_TestServicesAsync()
         {
-            var dd = _factory.Server.Services.GetRequiredService<IBookService>();
-            //            var dd2 = _factory.Server.Services.GetRequiredService<BooksModel>();
-            //Act
-            var ss = await dd.GetBooksAsync();
-            var response = await _client.GetAsync("/Books");
-
-            // Assert
-            response.StatusCode
-              .Should().Be(HttpStatusCode.OK);
-
-            if (response.IsSuccessStatusCode)
+            var serviceProvider = _factory.Server.Services;
+            using (var scope = serviceProvider.CreateScope())
             {
-                string stringData = await response.Content.ReadAsStringAsync();
-                stringData.Should().Contain("Author McAuthorFace");
-                
+                var scopedServices = scope.ServiceProvider;
+                var db = scopedServices.GetRequiredService<IScopedService>();
+
+                var scopedService = _factory.Server.Services.GetRequiredService<IBookService>();
+                scopedService.Should().NotBeNull();
+
             }
+            var singletonService = serviceProvider.GetRequiredService<ISingletonService>();
+            singletonService.Should().NotBeNull();
+            var transientService = serviceProvider.GetRequiredService<ITransientService>();
+            transientService.Should().NotBeNull();
 
         }
     }
