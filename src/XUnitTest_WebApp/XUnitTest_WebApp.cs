@@ -87,12 +87,9 @@ namespace XUnitTest_WebApp
             var serviceProvider = _factory.Server.Services;
             using (var scope = serviceProvider.CreateScope())
             {
-                var scopedServices = scope.ServiceProvider;
-                var db = scopedServices.GetRequiredService<IScopedService>();
-
-                var scopedService = _factory.Server.Services.GetRequiredService<IBookService>();
+                var sp = scope.ServiceProvider;
+                var scopedService = sp.GetRequiredService<IScopedService>();
                 scopedService.Should().NotBeNull();
-
             }
             var singletonService = serviceProvider.GetRequiredService<ISingletonService>();
             singletonService.Should().NotBeNull();
